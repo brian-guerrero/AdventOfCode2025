@@ -1,10 +1,10 @@
 var banks = BatteryBankParser.Parse("inputs/day3.txt");
-var sum = 0;
+long sum = 0;
 foreach (var bank in banks)
 {
-    var maxJoltage = bank.GetMaxJoltage(2);
+    var maxJoltage = bank.GetMaxJoltage(12);
     Console.WriteLine($"The largest joltage possible is {string.Join("", maxJoltage)}");
-    sum += maxJoltage[0] * 10 + maxJoltage[1];
+    sum += maxJoltage.GetTotalOutput();
 }
 
 Console.WriteLine($"Total output joltage: {sum}");
@@ -32,7 +32,28 @@ public static class BatteryBankParser
 
 public record BatteryBank(int[] Batteries)
 {
-    public int[] GetMaxJoltage(int totalBatteries)
+    public int[] GetMaxJoltage(int k)
+    {
+        if (k <= 0) return Array.Empty<int>();
+        if (k >= Batteries.Length) return Batteries.ToArray();
+
+        var stack = new List<int>();
+        int toRemove = Batteries.Length - k; // how many digits we may drop
+
+        foreach (var d in Batteries)
+        {
+            while (stack.Count > 0 && toRemove > 0 && stack[stack.Count - 1] < d)
+            {
+                stack.RemoveAt(stack.Count - 1);
+                toRemove--;
+            }
+            stack.Add(d);
+        }
+
+        // Return the first k elements from the stack (stack may be longer if we never removed enough)
+        return stack.Take(k).ToArray();
+    }
+    public int[] GetMaxJoltage()
     {
         int batteryJolt1 = Batteries[0];
         int index1 = 0;
@@ -58,5 +79,16 @@ public record BatteryBank(int[] Batteries)
             }
         }
         return [batteryJolt1, batteryJolt2];
+    }
+}
+
+public static class Extensions
+{
+    extension(int[] ints)
+    {
+
+        public long GetTotalOutput() =>
+            long.Parse(string.Join("", ints));
+
     }
 }
